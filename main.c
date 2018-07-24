@@ -13,7 +13,7 @@
 // Includes
 #include "lexer.h"
 
-token_t* Lex(char * input);
+instruction_t* Lex(char * input);
 
 
 // The main function
@@ -33,16 +33,15 @@ int main(int argc, char** argv)
 		}
 		// other commands to add
 
-		token_t *toks = Lex(expr);
-
-		logical_link link;
-		link.token = NULL;
+		instruction_t *instructions = Lex(expr);
 		
+		int instructCount = 0;
 		for (int i = 0; i < 50; i++){
-			if (toks[i].type) {
-				printf("Type: %d | Value: %s\n", toks[i].type, toks[i].value);
+			if (instructions[i].Number){
+				instructCount++;
 			}
 		}
+		printf("%d instruction(s) found\n", instructCount);
 
 		printf("> ");
 	}

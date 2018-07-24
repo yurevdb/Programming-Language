@@ -3,9 +3,9 @@
 //==================================================================================
 //
 //	Written by Yuré Vanderbruggen
-//	last edit: 19/7/2018
+//	last edit: 24/7/2018
 //	------------------------------
-//	TODO: Add identifier, keyword, operator arrays or enums for iteration;
+//	TODO: Add variable constraints
 //	!Notice:  
 //
 //=================================================================================
@@ -36,8 +36,9 @@ typedef struct{
 } token_t;
 
 typedef struct {
-	token_t* token;
-} logical_link;
+	int Number;
+	token_t tokens[50];
+} instruction_t;
 
 token_t CreateToken(name_t Type, const char *Value){
 	token_t t;
@@ -65,6 +66,7 @@ token_t Tokenize(const char * input){
 	token_t t;
 	t.type = literal;
 
+	// Keywords
 	for (int i = 0; i < SIZEOF_KEYWORDS; i++){
 		if (strcmp(KEYWORDS[i], input)==0){
 			t.type = keyword;
@@ -72,9 +74,18 @@ token_t Tokenize(const char * input){
 		}
 	}
 
+	// Operators
 	for (int i = 0; i < SIZEOF_OPERATORS; i++){
 		if (strcmp(OPERATORS[i], input)==0){
 			t.type = operator;
+			strcpy(t.value, input);
+		}
+	}
+
+	// Seperators
+	for (int i = 0; i < SIZEOF_SEPERATORS; i++){
+		if (strcmp(SEPERATORS[i], input)==0){
+			t.type = seperator;
 			strcpy(t.value, input);
 		}
 	}
@@ -86,9 +97,11 @@ token_t Tokenize(const char * input){
 	return t;
 }
 
-token_t* Lex(char * input){
+instruction_t* Lex(char * input){
 	static token_t Tokens[50]; // array of all tokens
 	int tokenCount = 0; // tokencount to add new tokens to the array
+	static instruction_t Instructions[50]; // Instructions
+	int instructionCount = 0; // count of the instructions
 	int bufferCount = 0; // count for the buffer to place a new character in it
 	char buffer[50]; // the buffer for the input
 	bool eoi = false; // end of input boolean value
@@ -104,7 +117,36 @@ token_t* Lex(char * input){
 			buffer[bufferCount] = input[i];
 			bufferCount++;
 		}
-		// Seperator found
+		// ; found
+		// End of instruction
+		else if ((int)input[i] == (int)*SEPERATORS[0]){
+			// Create the token for the buffer and clear the buffer
+			Tokens[tokenCount] = Tokenize(buffer);
+			tokenCount++;
+			bufferCount = 0;
+			ClearArray(buffer);
+
+			// Create a buffer to send to the function
+			buffer[0] = input[i];
+			Tokens[tokenCount] = Tokenize(buffer);
+			tokenCount++;
+			ClearArray(buffer);
+
+			// Create the instruction array
+			instruction_t instruct;
+			instruct.Number = instructionCount + 1;
+			for(int j = 0; j < 50; j++){
+				if (Tokens[j].type){
+					instruct.tokens[j] = Tokens[j];
+				}
+			}
+			Instructions[instructionCount] = instruct;
+			instructionCount++;
+
+			// End of instruction, go to next character
+			continue;
+		}
+		// other seperator found
 		else if ((buffer[0] != *"\0") || (input[i] != *"\0")) {
 			// end of input reached, check if there was something in the buffer and if so...
 			// add the last char from the input to the buffer
@@ -122,5 +164,5 @@ token_t* Lex(char * input){
 		}
 	}
 
-	return Tokens;
+	return Instructions;
 }
